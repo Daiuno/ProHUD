@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "ProHUD",
-    platforms: [.iOS(.v13)],
+    platforms: [.iOS(.v14)],
     products: [
         .library(name: "ProHUD", targets: ["ProHUD"]),
     ],
