@@ -15,6 +15,9 @@ public class SheetConfiguration: CommonConfiguration {
     /// 卡片距离屏幕的间距
     public var windowEdgeInset: CGFloat = 16
     
+    /// 卡片距离屏幕的底部距离
+    public var bottomEdgeInset: CGFloat? = nil
+    
     /// 是否是全屏的页面
     public var isFullScreen = false
     
@@ -63,6 +66,6 @@ public class SheetConfiguration: CommonConfiguration {
         animateDurationForBuildOut ?? 0.24
     }
     
-    override var cardCornerRadiusByDefault: CGFloat { cardCornerRadius ?? 32 }
+    override var cardCornerRadiusByDefault: CGFloat { cardCornerRadius ?? 0 }
     
 }

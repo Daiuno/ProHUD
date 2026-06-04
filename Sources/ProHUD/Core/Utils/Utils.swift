@@ -9,7 +9,7 @@ import UIKit
 
 extension UIImage {
     public convenience init?(inProHUD named: String) {
-        self.init(named: named, in: .module, with: .none)
+        self.init(named: named, in: .main, with: .none)
     }
 }
 

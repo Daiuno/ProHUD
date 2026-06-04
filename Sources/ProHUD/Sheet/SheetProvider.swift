@@ -56,6 +56,15 @@ public final class SheetProvider: HUDProviderType {
         return arr
     }
     
+    /// 查找所有HUD示例
+    @discardableResult public static func findAll(update handler: ((_ sheet: Target) -> Void)? = nil) -> [Target] {
+        let arr = AppContext.sheetWindows.values.flatMap({ $0 }).compactMap({ $0.sheet })
+        if let handler = handler {
+            arr.forEach({ $0.update(handler: handler) })
+        }
+        return arr
+    }
+    
 }
 
 public typealias Sheet = SheetProvider
