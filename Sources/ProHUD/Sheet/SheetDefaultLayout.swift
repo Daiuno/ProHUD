@@ -32,6 +32,7 @@ extension SheetTarget: DefaultLayout {
         if isViewAppeared {
             UIView.animateEaseOut(duration: config.animateDurationForReloadByDefault) {
                 self.view.layoutIfNeeded()
+                
             }
         }
     }
@@ -55,7 +56,7 @@ extension SheetTarget: DefaultLayout {
                 make.centerX.equalToSuperview()
                 if UIDevice.current.userInterfaceIdiom == .pad && width < autoWidth - 40 {
                     // iPad且窗口宽度较宽时居中弹出
-                    make.centerY.equalToSuperview()
+                    make.centerY.equalToSuperview().offset(config.yOffsetWhenCardLayoutCenterY)
                 } else {
                     if let bottomEdgeInset = config.bottomEdgeInset {
                         make.bottom.equalToSuperview().inset(bottomEdgeInset)
@@ -63,7 +64,7 @@ extension SheetTarget: DefaultLayout {
                         if isPortrait {
                             make.bottom.equalToSuperview().inset(config.windowEdgeInset)
                         } else {
-                            make.bottom.equalToSuperview().inset(AppContext.safeAreaInsets.bottom)
+                            make.centerY.equalToSuperview().offset(config.yOffsetWhenCardLayoutCenterY)
                         }
                     }
                 }

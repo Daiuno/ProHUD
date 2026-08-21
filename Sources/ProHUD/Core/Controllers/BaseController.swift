@@ -58,6 +58,7 @@ open class BaseController: UIViewController {
         case onViewWillDisappear = "onViewWillDisappear"
         case onViewDidDisappear = "onViewDidDisappear"
         case onTappedBackground = "onTappedBackground"
+        case onWindowHide = "onWindowHide"
     }
     
     var navEvents = [NavEvent: ((BaseController) -> Void)]()
@@ -87,9 +88,38 @@ open class BaseController: UIViewController {
         return self
     }
     
+    @discardableResult public func onWindowHide(_ callback: ((_ vc: BaseController) -> Void)?) -> BaseController {
+        navEvents[.onWindowHide] = callback
+        return self
+    }
+    
     open override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         isViewAppeared = true
+    }
+    
+    open override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        AppContext.resumeAppWindowVisible()
+        coordinator.animate(alongsideTransition: { _ in
+            if let target = self as? DefaultLayout {
+                target.cfg.viewWillTransitionUpdate?(target.cfg, {
+                    target.reloadData(animated: true)
+                })
+            }
+        }, completion: { _ in
+            if let sheetTarget = self as? SheetTarget, sheetTarget.config.stackDepthEffect {
+                AppContext.updateAppWindowSnapshotIfNeed(afterScreenUpdates: true)
+                AppContext.appWindowStackDepthEffect(progress: 0)
+            }
+        })
+    }
+    
+    open override var prefersStatusBarHidden: Bool {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return !isDevicePortrait
+        }
+        return super.prefersStatusBarHidden
     }
     
 }

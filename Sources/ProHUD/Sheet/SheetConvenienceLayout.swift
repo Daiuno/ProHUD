@@ -105,11 +105,70 @@ extension SheetTarget: ConvenienceLayout {
     }
     
     // MARK: 完全自定义布局
-    
     @discardableResult public func set(customView: UIView) -> UIView {
         self.customView = customView
+        if config.enableCustomViewPanGesture {
+            let pan = UIPanGestureRecognizer(target: self, action: #selector(handleCustomViewPanGesture))
+            pan.delegate = self
+            // 避免下拉 dismiss pan 取消 UITextView 长按/选区触摸，导致复制菜单出不来
+            pan.cancelsTouchesInView = false
+            customView.addGestureRecognizer(pan)
+        }
         contentView.addSubview(customView)
         return customView
+    }
+    
+    @objc func handleCustomViewPanGesture(_ gesture: UIPanGestureRecognizer) {
+        guard let customView else { return }
+    
+        let point = gesture.translation(in: gesture.view)
+        if point.y <= 0 {
+            //The rubber band animation when pulling up
+            let threshold: CGFloat = 0
+            let maxTranslation: CGFloat = -35
+            let rubberRange = threshold - maxTranslation
+            let excess = threshold - point.y
+            let decay: CGFloat = 100
+            let additional = rubberRange * (1 - exp(-excess / decay))
+            contentView.transform = .init(translationX: 0, y: threshold - additional)
+            if gesture.state == .recognized {
+                UIView.animate(withDuration: 0.5,
+                               delay: 0,
+                               usingSpringWithDamping: 0.8,
+                               initialSpringVelocity: 0,
+                               options: [.allowUserInteraction, .curveEaseInOut],
+                               animations: {
+                    self.contentView.transform = .identity
+                })
+            }
+        } else {
+            customView.transform = .init(translationX: 0, y: point.y)
+            
+            //Simulating iOS window animations
+            if config.stackDepthEffect {
+                AppContext.appWindowStackDepthEffect(progress: customView.frame.origin.y/(customView.frame.height))
+            }
+            
+            if gesture.state == .recognized {
+                let v = gesture.velocity(in: gesture.view)
+                if (customView.frame.origin.y > customView.frame.height*2/3 && v.y > 0) || v.y > 1200 {
+                    pop()
+                } else {
+                    UIView.animate(withDuration: 0.5,
+                                   delay: 0,
+                                   usingSpringWithDamping: 0.8,
+                                   initialSpringVelocity: 0,
+                                   options: [.allowUserInteraction, .curveEaseInOut],
+                                   animations: {
+                        customView.transform = .identity
+                        
+                        if self.config.stackDepthEffect {
+                            AppContext.appWindowStackDepthEffect(progress: 0)
+                        }
+                    })
+                }
+            }
+        }
     }
     
     // MARK: internal
@@ -123,6 +182,33 @@ extension SheetTarget: ConvenienceLayout {
         return nil
     }
     
+}
+
+extension SheetTarget: UIGestureRecognizerDelegate {
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if let gesture = gestureRecognizer as? UIPanGestureRecognizer {
+            if let panGestureShouldBegin = config.panGestureShouldBegin {
+                return panGestureShouldBegin(gesture)
+            }
+        }
+        return true
+    }
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // shouldReceive 阶段 gesture.location 不可靠，用 touch.view 判断文本控件
+        guard gestureRecognizer is UIPanGestureRecognizer,
+              config.panGestureShouldBegin != nil else {
+            return true
+        }
+        var view: UIView? = touch.view
+        while let current = view {
+            if current is UITextView || current is UITextField {
+                return false
+            }
+            view = current.superview
+        }
+        return true
+    }
 }
 
 // MARK: more

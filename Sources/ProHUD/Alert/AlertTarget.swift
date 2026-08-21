@@ -15,6 +15,8 @@ open class AlertTarget: BaseController, HUDTargetType {
     
     public var progressView: ProgressView?
     
+    private var tapActionCallback: ((_ sheet: AlertTarget) -> Void)?
+    
     /// 内容容器（包括icon、textStack、actionStack)
     public lazy var contentStack: StackView = {
         let stack = StackView(axis: .vertical)
@@ -110,9 +112,20 @@ open class AlertTarget: BaseController, HUDTargetType {
         super.viewDidLoad()
         reloadData(animated: false)
         navEvents[.onViewDidLoad]?(self)
+        
+        view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(_onTappedBackground(_:))))
     }
     
+    public func onTappedBackground(action: @escaping (_ alert: AlertTarget) -> Void) {
+        self.tapActionCallback = action
+    }
     
+}
+
+extension AlertTarget {
+    @objc func _onTappedBackground(_ sender: UITapGestureRecognizer) {
+        tapActionCallback?(self)
+    }
 }
 
 // MARK: 动画扩展

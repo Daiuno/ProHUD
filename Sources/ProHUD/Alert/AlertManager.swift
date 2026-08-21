@@ -50,7 +50,6 @@ extension AlertTarget {
         } completion: { done in
             self.view.removeFromSuperview()
             self.removeFromParent()
-            self.navEvents[.onViewDidDisappear]?(self)
         }
         // hide window
         guard let window = attachedWindow, let windowScene = windowScene ?? AppContext.windowScene else { return }
@@ -61,6 +60,9 @@ extension AlertTarget {
             } completion: { done in
                 // 这里设置一下window属性，会使window的生命周期被延长到此处，即动画执行过程中window不会被提前释放
                 window.isHidden = true
+                window.windowLevel = .normal
+                self.navEvents[.onViewDidDisappear]?(self)
+                self.navEvents[.onWindowHide]?(self)
             }
         }
     }

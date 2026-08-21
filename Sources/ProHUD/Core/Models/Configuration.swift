@@ -185,6 +185,8 @@ open class CommonConfiguration: NSObject {
     public func contentViewMask(_ callback: @escaping (_ mask: UIVisualEffectView) -> Void) {
         customContentViewMask = callback
     }
+    
+    public var viewWillTransitionUpdate: ((_ config: CommonConfiguration, _ reloadHUD: (() -> Void)) -> Void)? = nil
 
     public override init() {
         

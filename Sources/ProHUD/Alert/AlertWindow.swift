@@ -16,6 +16,7 @@ class AlertWindow: Window {
     static func createAttachedWindowIfNotExists(config: AlertConfiguration) -> AlertWindow {
         let windowScene = AppContext.windowScene
         if let windowScene = windowScene, let w = AppContext.alertWindow[windowScene] {
+            w.windowLevel = .phAlert
             return w
         }
         let w: AlertWindow

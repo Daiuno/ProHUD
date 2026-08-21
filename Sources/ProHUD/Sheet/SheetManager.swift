@@ -18,6 +18,7 @@ extension SheetTarget {
             isNew = false
             window = w
             window.sheet = self
+            window.windowLevel = .phSheet
         } else {
             window = SheetWindow(sheet: self)
             isNew = true
@@ -41,22 +42,19 @@ extension SheetTarget {
     }
     
     @objc open func pop() {
-        var windows = getContextWindows()
-        guard let window = windows.first(where: { $0.sheet == self }) else {
+        guard let window = getContextWindows().first(where: { $0.sheet == self }) else {
             return
         }
         
         if ProcessInfo.processInfo.isiOSAppOnMac {
             //Mac上会闪退 这里使用特殊方式来处理
-            var windows = getContextWindows()
-            guard let window = windows.first(where: { $0.sheet == self }) else {
-                return
-            }
             // 在 window 释放前，先保存 windowScene（因为 setContextWindows 需要它）
             let scene = window.windowScene
             navEvents[.onViewWillDisappear]?(self)
             window.sheet.translateOut { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
+                var windows = self.getContextWindows()
+                
                 // 先获取回调，避免在 window 释放过程中访问
                 let didDisappearCallback = self.navEvents[.onViewDidDisappear]
                 
@@ -82,7 +80,9 @@ extension SheetTarget {
                 }
                 
                 // 调用回调
+                window.windowLevel = .normal
                 didDisappearCallback?(self)
+                self.navEvents[.onWindowHide]?(self)
                 
                 // 延迟释放 window，让系统有时间完成内部清理
                 // 这可以避免 Mac Catalyst 上 UIWindow 释放时的竞态条件
@@ -95,6 +95,7 @@ extension SheetTarget {
             navEvents[.onViewWillDisappear]?(self)
             window.sheet.translateOut { [weak window, weak self] in
                 guard let self = self, let win = window else { return }
+                var windows = self.getContextWindows()
                 if windows.count > 1 {
                     windows.removeAll { $0 == win }
                 } else if windows.count == 1 {
@@ -103,7 +104,9 @@ extension SheetTarget {
                     consolePrint("‼️代码漏洞：已经没有sheet了")
                 }
                 self.setContextWindows(windows)
+                win.windowLevel = .normal
                 win.sheet.navEvents[.onViewDidDisappear]?(win.sheet)
+                win.sheet.navEvents[.onWindowHide]?(win.sheet)
             }
         }
     }
@@ -126,13 +129,24 @@ extension SheetTarget {
         UIView.animateEaseOut(duration: config.animateDurationForBuildInByDefault) {
             self._translateIn()
             if self.config.stackDepthEffect {
-                if isPhonePortrait {
-                    AppContext.appWindow?.transform = .init(translationX: 0, y: 8).scaledBy(x: 0.9, y: 0.9)
-                } else {
-                    AppContext.appWindow?.transform = .init(scaleX: 0.92, y: 0.92)
+                AppContext.updateAppWindowSnapshotIfNeed()
+                AppContext.appWindowStackDepthEffect(progress: 0)
+                
+                ///stackDepthEffect controls the animation effects of the app window.
+                ///If set stackDepthEffect, we always enable this feature for the first sheet.
+                ///If all sheets are given the ability to control the app window, the animation effects would be pretty bad.
+                let allSheets = SheetProvider.findAll()
+                if allSheets.count > 0 {
+                    var sheetIndex = 0
+                    allSheets.forEach({
+                        if sheetIndex == 0 {
+                            $0.config.stackDepthEffect = true
+                        } else {
+                            $0.config.stackDepthEffect = false
+                        }
+                        sheetIndex += 1
+                    })
                 }
-                AppContext.appWindow?.layer.cornerRadiusWithContinuous = 16
-                AppContext.appWindow?.layer.masksToBounds = true
             }
         } completion: { done in
             completion?()
@@ -143,11 +157,13 @@ extension SheetTarget {
         UIView.animateLinear(duration: config.animateDurationForBuildOutByDefault) {
             self._translateOut()
             if self.config.stackDepthEffect {
-                AppContext.appWindow?.transform = .identity
-                AppContext.appWindow?.layer.cornerRadius = 0
+                AppContext.appWindowStackDepthEffect(progress: 1)
             }
         } completion: { done in
             completion?()
+            if self.config.stackDepthEffect {
+                AppContext.removeStackDepthEffectSnapshot()
+            }
         }
     }
     

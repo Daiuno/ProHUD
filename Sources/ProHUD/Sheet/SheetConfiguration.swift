@@ -21,8 +21,16 @@ public class SheetConfiguration: CommonConfiguration {
     /// 是否是全屏的页面
     public var isFullScreen = false
     
-    /// 副标题字体
+    ///是否为自定义视图添加拖动动画
+    public var enableCustomViewPanGesture: Bool = false
     
+    ///是否允许CustomViewPanGesture执行手势
+    public var panGestureShouldBegin: ((UIPanGestureRecognizer) -> Bool)? = nil
+    
+    ///如果上下居中布局的时候 是否需要添加偏移量
+    public var yOffsetWhenCardLayoutCenterY: CGFloat = 0.0
+    
+    /// 副标题字体
     var customSubtitleLabel: ((_ label: UILabel) -> Void)?
     
     public func customSubtitleLabel(handler: @escaping (_ label: UILabel) -> Void) {

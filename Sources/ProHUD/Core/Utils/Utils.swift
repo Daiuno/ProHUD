@@ -27,8 +27,25 @@ var isPortrait: Bool {
     return false
 }
 
+var isDevicePortrait: Bool {
+    AppContext.windowScene?.interfaceOrientation.isPortrait ?? true
+}
+
 var isPhonePortrait: Bool {
     UIDevice.current.userInterfaceIdiom == .phone && (AppContext.windowScene?.interfaceOrientation.isPortrait == true)
+}
+
+var hasNotch: Bool {
+    let insets: UIEdgeInsets = AppContext.appWindow?.safeAreaInsets ?? .zero
+    let orientation = AppContext.appWindow?.windowScene?.interfaceOrientation ?? .portrait
+    if orientation == .landscapeRight {
+        return insets.left > 20
+    } else if orientation == .landscapeLeft {
+        return insets.right > 20
+    } else if orientation == .portraitUpsideDown {
+        return insets.bottom > 20
+    }
+    return insets.top > 20
 }
 
 

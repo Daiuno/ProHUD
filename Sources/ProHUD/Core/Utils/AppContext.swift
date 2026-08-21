@@ -200,4 +200,83 @@ extension AppContext {
         Self.alertWindow[windowScene]
     }
 }
+
+extension AppContext {
+    private static var appWindowPortraitSnapshot: UIImageView? = nil
+    private static var appWindowLandscapeSnapshot: UIImageView? = nil
+    private static var appWindowSnapshotView: UIImageView? {
+        get {
+            isDevicePortrait ? appWindowPortraitSnapshot : appWindowLandscapeSnapshot
+        }
+        set {
+            if isDevicePortrait {
+                appWindowPortraitSnapshot = newValue
+            } else {
+                appWindowLandscapeSnapshot = newValue
+            }
+        }
+    }
+    
+    static func updateAppWindowSnapshotIfNeed(afterScreenUpdates: Bool = false) {
+        guard appWindowSnapshotView == nil else { return }
+        
+        if let appWindow {
+            let renderer = UIGraphicsImageRenderer(bounds: appWindow.bounds)
+            let image = renderer.image { _ in
+                appWindow.drawHierarchy(in: appWindow.bounds, afterScreenUpdates: afterScreenUpdates)
+            }
+            let snapshotView = UIImageView(image: image)
+            snapshotView.contentMode = .scaleToFill
+            snapshotView.layer.masksToBounds = true
+            AppContext.appWindow?.addSubview(snapshotView)
+            snapshotView.snp.makeConstraints { make in
+                make.edges.equalToSuperview()
+            }
+            appWindowSnapshotView = snapshotView
+        }
+    }
+    
+    static func removeStackDepthEffectSnapshot() {
+        appWindowPortraitSnapshot?.removeFromSuperview()
+        appWindowLandscapeSnapshot?.removeFromSuperview()
+        appWindowPortraitSnapshot = nil
+        appWindowLandscapeSnapshot = nil
+        resumeAppWindowVisible()
+    }
+    
+    static func resumeAppWindowVisible() {
+        AppContext.appWindow?.rootViewController?.view.alpha = 1
+        appWindowPortraitSnapshot?.isHidden = true
+        appWindowLandscapeSnapshot?.isHidden = true
+    }
+    
+    ///0 to 1 window gradually enlarges, and when it's at its maximum, it returns to its original size.
+    static func appWindowStackDepthEffect(progress: CGFloat) {
+        var fixProgress = max(progress, 0)
+        fixProgress = min(fixProgress, 1)
+        
+        if isDevicePortrait {
+            appWindowLandscapeSnapshot?.isHidden = true
+            appWindowPortraitSnapshot?.isHidden = false
+        } else {
+            appWindowLandscapeSnapshot?.isHidden = false
+            appWindowPortraitSnapshot?.isHidden = true
+        }
+        AppContext.appWindow?.rootViewController?.view.alpha = 0
+        
+        if isPhonePortrait {
+            appWindowSnapshotView?.transform = .init(translationX: 0, y: 8-(8*progress)).scaledBy(x: 0.9+0.1*progress, y: 0.9+0.1*progress)
+        } else {
+            appWindowSnapshotView?.transform = .init(scaleX: 0.92+0.08*progress, y: 0.92+0.08*progress)
+        }
+        
+        if hasNotch {
+            //16~39
+            appWindowSnapshotView?.layer.cornerRadiusWithContinuous = 16+((39-16)*progress)
+        } else {
+            //16~4
+            appWindowSnapshotView?.layer.cornerRadiusWithContinuous = 16-((16-4)*progress)
+        }
+    }
+}
  

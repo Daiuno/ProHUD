@@ -131,6 +131,7 @@ extension CapsuleTarget {
             window.isHidden = true
             window.transform = .identity
             self.navEvents[.onViewDidDisappear]?(self)
+            self.navEvents[.onWindowHide]?(self)
         }
         var duration = config.animateDurationForBuildOutByDefault
         if let animateBuildOut = config.animateBuildOut {
