@@ -29,10 +29,11 @@ extension ToastTarget {
         }
         let size = getWindowSize(window: window)
         window.frame = CGRect(x: (AppContext.appBounds.width - size.width) / 2, y: 0, width: size.width, height: size.height)
-        window.rootViewController = self // 此时toast.view.frame.size会自动更新为window.frame.size
+        window.rootViewController = self
+        window.isHidden = false
         
         ToastWindow.updateToastWindowsLayout(windows: windows)
-        // 为了更连贯，从进入动画开始时就开始计时
+        // Start the timeout when the build-in animation begins.
         updateTimeoutDuration()
         func completion() {
             self.navEvents[.onViewDidAppear]?(self)

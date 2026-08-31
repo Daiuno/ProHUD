@@ -24,19 +24,34 @@ extension SheetTarget {
             isNew = true
         }
         window.rootViewController = self
+        if #available(iOS 26.0, *) {
+            window.matchSceneGeometry()
+            setNeedsUpdateOfSupportedInterfaceOrientations()
+            setNeedsUpdateOfPrefersInterfaceOrientationLocked()
+        }
         
         if windows.contains(window) == false {
             windows.append(window)
             setContextWindows(windows)
         }
         if isNew {
-            _translateOut()
-            navEvents[.onViewWillAppear]?(self)
+            if #available(iOS 26.0, *) {
+                window.layoutIfNeeded()
+                _translateOut()
+                navEvents[.onViewWillAppear]?(self)
+                window.isHidden = false
+            } else {
+                _translateOut()
+                navEvents[.onViewWillAppear]?(self)
+            }
             window.sheet.translateIn { [weak self] in
                 guard let self = self else { return }
                 self.navEvents[.onViewDidAppear]?(self)
             }
         } else {
+            if #available(iOS 26.0, *) {
+                window.isHidden = false
+            }
             view.layoutIfNeeded()
         }
     }

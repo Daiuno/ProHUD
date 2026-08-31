@@ -29,8 +29,12 @@ class AlertWindow: Window {
         if let windowScene = windowScene {
             AppContext.alertWindow[windowScene] = w
         }
-        // 比原生alert层级低一点
+        // Below the system alert window level.
         w.windowLevel = .phAlert
+        if #available(iOS 26.0, *) {
+            w.matchSceneGeometry()
+            w.isHidden = false
+        }
         return w
     }
     

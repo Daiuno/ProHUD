@@ -14,7 +14,7 @@ extension UIImage {
 }
 
 
-/// 是否是竖屏(紧凑布局)模式
+/// Compact (phone-portrait-like) layout.
 var isPortrait: Bool {
     if AppContext.appBounds.width < 450 {
         return true
@@ -33,6 +33,38 @@ var isDevicePortrait: Bool {
 
 var isPhonePortrait: Bool {
     UIDevice.current.userInterfaceIdiom == .phone && (AppContext.windowScene?.interfaceOrientation.isPortrait == true)
+}
+
+/// Scene interface orientation, not `UIDevice.current.orientation` (can disagree when orientation is forced).
+var currentSceneInterfaceOrientation: UIInterfaceOrientation {
+    if #available(iOS 16.0, *),
+       let orientation = AppContext.windowScene?.effectiveGeometry.interfaceOrientation,
+       orientation != .unknown {
+        return orientation
+    }
+    let orientation = AppContext.windowScene?.interfaceOrientation ?? .unknown
+    return orientation == .unknown ? .portrait : orientation
+}
+
+var currentSceneInterfaceOrientationMask: UIInterfaceOrientationMask {
+    currentSceneInterfaceOrientation.interfaceOrientationMask
+}
+
+extension UIInterfaceOrientation {
+    var interfaceOrientationMask: UIInterfaceOrientationMask {
+        switch self {
+        case .portrait:
+            return .portrait
+        case .portraitUpsideDown:
+            return .portraitUpsideDown
+        case .landscapeLeft:
+            return .landscapeLeft
+        case .landscapeRight:
+            return .landscapeRight
+        default:
+            return .all
+        }
+    }
 }
 
 var hasNotch: Bool {

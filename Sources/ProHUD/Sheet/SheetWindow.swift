@@ -21,7 +21,9 @@ class SheetWindow: Window {
         tintColor = UIColor(red: 1, green: 36/255, blue: 66/255, alpha: 1)
         sheet.window = self
         windowLevel = .phSheet
-        isHidden = false
+        matchSceneGeometry()
+        // Unhide in push() after SheetTarget is the root, so iOS 26 does not
+        // first layout this window in the physical device orientation.
     }
     
     required init?(coder: NSCoder) {

@@ -23,7 +23,11 @@ class ToastWindow: Window {
         layer.shadowRadius = 8
         layer.shadowOffset = .init(width: 0, height: 5)
         layer.shadowOpacity = 0.2
-        isHidden = false
+        if #available(iOS 26.0, *) {
+            // Unhide in push() after ToastTarget is installed as root.
+        } else {
+            isHidden = false
+        }
     }
     
     required init?(coder: NSCoder) {

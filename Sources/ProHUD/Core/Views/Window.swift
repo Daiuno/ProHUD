@@ -8,6 +8,27 @@
 import UIKit
 import SnapKit
 
+/// Placeholder / alert-host VC that reports the scene's interface orientation.
+/// iOS 26 otherwise sizes a new overlay window from the physical device orientation.
+class OverlayRootViewController: UIViewController {
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        if #available(iOS 26.0, *) {
+            return currentSceneInterfaceOrientationMask
+        }
+        return super.supportedInterfaceOrientations
+    }
+    
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+        if #available(iOS 26.0, *) {
+            return currentSceneInterfaceOrientation
+        }
+        return super.preferredInterfaceOrientationForPresentation
+    }
+    
+    @available(iOS 26.0, *)
+    override var prefersInterfaceOrientationLocked: Bool { true }
+}
+
 class Window: UIWindow {
     
     lazy var backgroundView: UIView = {
@@ -24,16 +45,10 @@ class Window: UIWindow {
         setup()
     }
     
-    lazy var vc: UIViewController = {
-        UIViewController()
-    }()
+    lazy var vc: UIViewController = OverlayRootViewController()
     
     func setup() {
-        makeKeyAndVisible()
-        resignKey()
         backgroundColor = .clear
-        
-        //设置外观
         overrideUserInterfaceStyle = AppContext.overrideUserInterfaceStyle
         
         if usingBackground {
@@ -43,6 +58,23 @@ class Window: UIWindow {
             }
         }
         rootViewController = vc
+        if #available(iOS 26.0, *) {
+            // Stay hidden until the real root is installed. makeKeyAndVisible()
+            // here would size the window from the physical device orientation.
+        } else {
+            makeKeyAndVisible()
+            resignKey()
+        }
+    }
+    
+    /// iOS 26 only: copy the scene's interface bounds so the overlay does not start in device-native portrait.
+    func matchSceneGeometry() {
+        guard #available(iOS 26.0, *) else { return }
+        guard let scene = windowScene else { return }
+        let bounds = scene.coordinateSpace.bounds
+        guard !bounds.isEmpty else { return }
+        transform = .identity
+        frame = bounds
     }
     
     override init(windowScene: UIWindowScene) {
