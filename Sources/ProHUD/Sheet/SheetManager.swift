@@ -26,8 +26,6 @@ extension SheetTarget {
         window.rootViewController = self
         if #available(iOS 26.0, *) {
             window.matchSceneGeometry()
-            setNeedsUpdateOfSupportedInterfaceOrientations()
-            setNeedsUpdateOfPrefersInterfaceOrientationLocked()
         }
         
         if windows.contains(window) == false {
@@ -94,10 +92,11 @@ extension SheetTarget {
                     AppContext.sheetWindows[scene] = windows
                 }
                 
-                // 调用回调
+                // Calling callbacks
                 window.windowLevel = .normal
                 didDisappearCallback?(self)
                 self.navEvents[.onWindowHide]?(self)
+                AppContext.restoreInterfaceRotationIfNeeded()
                 
                 // 延迟释放 window，让系统有时间完成内部清理
                 // 这可以避免 Mac Catalyst 上 UIWindow 释放时的竞态条件
@@ -119,9 +118,14 @@ extension SheetTarget {
                     consolePrint("‼️代码漏洞：已经没有sheet了")
                 }
                 self.setContextWindows(windows)
+                if #available(iOS 26.0, *) {
+                    // Hidden overlay VCs must not keep the scene orientation locked.
+                    win.isHidden = true
+                }
                 win.windowLevel = .normal
                 win.sheet.navEvents[.onViewDidDisappear]?(win.sheet)
                 win.sheet.navEvents[.onWindowHide]?(win.sheet)
+                AppContext.restoreInterfaceRotationIfNeeded()
             }
         }
     }

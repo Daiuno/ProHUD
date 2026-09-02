@@ -168,6 +168,15 @@ extension AppContext {
         }.first
     }
     
+    /// Ask the app window to re-apply rotation after an overlay is dismissed.
+    /// iOS 26 keeps `isInterfaceOrientationLocked` until a visible VC reports false.
+    static func restoreInterfaceRotationIfNeeded() {
+        guard #available(iOS 26.0, *) else { return }
+        let root = appWindow?.rootViewController
+        root?.setNeedsUpdateOfSupportedInterfaceOrientations()
+        root?.setNeedsUpdateOfPrefersInterfaceOrientationLocked()
+    }
+    
     /// App主程序窗口的尺寸
     static var appBounds: CGRect {
         appWindow?.bounds ?? UIScreen.main.bounds

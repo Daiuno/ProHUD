@@ -8,26 +8,9 @@
 import UIKit
 import SnapKit
 
-/// Placeholder / alert-host VC that reports the scene's interface orientation.
-/// iOS 26 otherwise sizes a new overlay window from the physical device orientation.
-class OverlayRootViewController: UIViewController {
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        if #available(iOS 26.0, *) {
-            return currentSceneInterfaceOrientationMask
-        }
-        return super.supportedInterfaceOrientations
-    }
-    
-    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        if #available(iOS 26.0, *) {
-            return currentSceneInterfaceOrientation
-        }
-        return super.preferredInterfaceOrientationForPresentation
-    }
-    
-    @available(iOS 26.0, *)
-    override var prefersInterfaceOrientationLocked: Bool { true }
-}
+/// Alert host / placeholder root. Do not lock interface orientation here:
+/// iOS 26 would keep the scene locked after the overlay is dismissed.
+class OverlayRootViewController: UIViewController {}
 
 class Window: UIWindow {
     

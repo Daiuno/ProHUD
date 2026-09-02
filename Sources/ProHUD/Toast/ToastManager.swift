@@ -75,6 +75,7 @@ extension ToastTarget {
             self.navEvents[.onWindowHide]?(self)
             // 这里设置一下window属性，会使window的生命周期被延长到此处，即动画执行过程中window不会被提前释放
             window.isHidden = true
+            AppContext.restoreInterfaceRotationIfNeeded()
         }
     }
     

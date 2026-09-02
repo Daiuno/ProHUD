@@ -35,38 +35,6 @@ var isPhonePortrait: Bool {
     UIDevice.current.userInterfaceIdiom == .phone && (AppContext.windowScene?.interfaceOrientation.isPortrait == true)
 }
 
-/// Scene interface orientation, not `UIDevice.current.orientation` (can disagree when orientation is forced).
-var currentSceneInterfaceOrientation: UIInterfaceOrientation {
-    if #available(iOS 16.0, *),
-       let orientation = AppContext.windowScene?.effectiveGeometry.interfaceOrientation,
-       orientation != .unknown {
-        return orientation
-    }
-    let orientation = AppContext.windowScene?.interfaceOrientation ?? .unknown
-    return orientation == .unknown ? .portrait : orientation
-}
-
-var currentSceneInterfaceOrientationMask: UIInterfaceOrientationMask {
-    currentSceneInterfaceOrientation.interfaceOrientationMask
-}
-
-extension UIInterfaceOrientation {
-    var interfaceOrientationMask: UIInterfaceOrientationMask {
-        switch self {
-        case .portrait:
-            return .portrait
-        case .portraitUpsideDown:
-            return .portraitUpsideDown
-        case .landscapeLeft:
-            return .landscapeLeft
-        case .landscapeRight:
-            return .landscapeRight
-        default:
-            return .all
-        }
-    }
-}
-
 var hasNotch: Bool {
     let insets: UIEdgeInsets = AppContext.appWindow?.safeAreaInsets ?? .zero
     let orientation = AppContext.appWindow?.windowScene?.interfaceOrientation ?? .portrait

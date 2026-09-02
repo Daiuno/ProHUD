@@ -63,6 +63,7 @@ extension AlertTarget {
                 window.windowLevel = .normal
                 self.navEvents[.onViewDidDisappear]?(self)
                 self.navEvents[.onWindowHide]?(self)
+                AppContext.restoreInterfaceRotationIfNeeded()
             }
         }
     }

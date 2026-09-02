@@ -122,24 +122,6 @@ open class BaseController: UIViewController {
         return super.prefersStatusBarHidden
     }
     
-    /// iOS 26 overlay windows otherwise follow the physical device, not the forced scene orientation.
-    open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        if #available(iOS 26.0, *) {
-            return currentSceneInterfaceOrientationMask
-        }
-        return super.supportedInterfaceOrientations
-    }
-    
-    open override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        if #available(iOS 26.0, *) {
-            return currentSceneInterfaceOrientation
-        }
-        return super.preferredInterfaceOrientationForPresentation
-    }
-    
-    @available(iOS 26.0, *)
-    open override var prefersInterfaceOrientationLocked: Bool { true }
-    
 }
 
 // MARK: - 事件
