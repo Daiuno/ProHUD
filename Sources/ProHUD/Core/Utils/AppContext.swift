@@ -156,7 +156,7 @@ extension AppContext {
     }
     
     /// App主程序窗口
-    static var appWindow: UIWindow? {
+    public static var appWindow: UIWindow? {
         // 如果应该使用外部窗口，优先返回外部窗口
         if shouldUseExternalWindow, let info = externalWindowInfo {
             return info.window
