@@ -120,19 +120,25 @@ extension CapsuleTarget: DefaultLayout {
     }
     
     func getWindowFrame(size: CGSize) -> CGRect {
-        // 应用到frame
+        // The capsule window is the card itself. In Tabletop, place that card inside the app window instead of stretching the window to the pane.
+        let host: CGRect
+        if AppContext.isPhoneDuoTabletopMode, let appFrame = AppContext.appWindow?.frame, appFrame.width > 1, appFrame.height > 1 {
+            host = appFrame
+        } else {
+            host = CGRect(origin: .zero, size: AppContext.appBounds.size)
+        }
         let newFrame: CGRect
         switch vm?.position {
         case .top, .none:
             let topLayoutMargins = AppContext.appWindow?.safeAreaInsets.top ?? 8
-            let y = max(topLayoutMargins, 8)
-            newFrame = .init(x: (AppContext.appBounds.width - size.width) / 2, y: y, width: size.width, height: size.height)
+            let y = host.minY + max(topLayoutMargins, 8)
+            newFrame = .init(x: host.minX + (host.width - size.width) / 2, y: y, width: size.width, height: size.height)
         case .middle:
-            newFrame = .init(x: (AppContext.appBounds.width - size.width) / 2, y: (AppContext.appBounds.height - size.height) / 2 - 20, width: size.width, height: size.height)
+            newFrame = .init(x: host.minX + (host.width - size.width) / 2, y: host.minY + (host.height - size.height) / 2 - 20, width: size.width, height: size.height)
         case .bottom:
             let bottomLayoutMargins = AppContext.appWindow?.layoutMargins.bottom ?? 8
-            let y = AppContext.appBounds.height - bottomLayoutMargins - size.height - 60
-            newFrame = .init(x: (AppContext.appBounds.width - size.width) / 2, y: y, width: size.width, height: size.height)
+            let y = host.maxY - bottomLayoutMargins - size.height - 60
+            newFrame = .init(x: host.minX + (host.width - size.width) / 2, y: y, width: size.width, height: size.height)
         }
         return newFrame
     }

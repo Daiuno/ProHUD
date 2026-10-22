@@ -23,7 +23,15 @@ class SheetWindow: Window {
         windowLevel = .phSheet
         matchSceneGeometry()
         // Unhide in push() after SheetTarget is the root, so iOS 26 does not
-        // first layout this window in the physical device orientation.
+        // first layout this window in the physical device orientation. 
+    }
+    
+    override func matchSceneGeometry() {
+        super.matchSceneGeometry()
+        // The card slides in from below the window. Clip to the top pane so it does not cross into the controller.
+        let clip = AppContext.isPhoneDuoTabletopMode
+        layer.masksToBounds = clip
+        rootViewController?.view.clipsToBounds = clip
     }
     
     required init?(coder: NSCoder) {

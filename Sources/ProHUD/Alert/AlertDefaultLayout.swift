@@ -80,13 +80,23 @@ extension AlertTarget: DefaultLayout {
         // custom layout
         guard customView == nil else {
             contentView.snp.remakeConstraints { make in
-                make.center.equalToSuperview()
+                if isPhoneDuoCompactWidth {
+                    make.leading.trailing.equalTo(view.safeAreaLayoutGuide).inset(24)
+                    make.centerY.equalToSuperview()
+                } else {
+                    make.center.equalToSuperview()
+                }
             }
             return
         }
         // default layout
         contentView.snp.remakeConstraints { make in
-            make.center.equalToSuperview()
+            if isPhoneDuoCompactWidth {
+                make.centerX.equalToSuperview().offset(-84/2)
+                make.centerY.equalToSuperview()
+            } else {
+                make.center.equalToSuperview()
+            }
             if customView == nil {
                 make.width.greaterThanOrEqualTo(config.cardMinWidth)
                 make.width.lessThanOrEqualTo(config.cardMaxWidthByDefault)

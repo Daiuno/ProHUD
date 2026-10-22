@@ -16,7 +16,10 @@ extension UIImage {
 
 /// Compact (phone-portrait-like) layout.
 var isPortrait: Bool {
-    if AppContext.appBounds.width < 450 {
+    if AppContext.isPhoneDuoTabletopMode {
+        return false
+    }
+    if AppContext.appBounds.width < 470 {
         return true
     }
     if UIDevice.current.userInterfaceIdiom == .phone {
@@ -28,11 +31,17 @@ var isPortrait: Bool {
 }
 
 var isDevicePortrait: Bool {
-    AppContext.windowScene?.interfaceOrientation.isPortrait ?? true
+    if AppContext.isPhoneDuoTabletopMode {
+        return false
+    }
+    return AppContext.windowScene?.interfaceOrientation.isPortrait ?? true
 }
 
 var isPhonePortrait: Bool {
-    UIDevice.current.userInterfaceIdiom == .phone && (AppContext.windowScene?.interfaceOrientation.isPortrait == true)
+    if AppContext.isPhoneDuoTabletopMode {
+        return false
+    }
+    return UIDevice.current.userInterfaceIdiom == .phone && (AppContext.windowScene?.interfaceOrientation.isPortrait == true)
 }
 
 var hasNotch: Bool {
@@ -48,6 +57,46 @@ var hasNotch: Bool {
     return insets.top > 20
 }
 
+var isPhoneDuo: Bool {
+#if targetEnvironment(simulator)
+    return ProcessInfo().environment["SIMULATOR_MODEL_IDENTIFIER"]! == "iPhone19,4"
+#else
+    var systemInfo = utsname()
+    uname(&systemInfo)
+    
+    let versionCode: String = String(validatingUTF8: NSString(bytes: &systemInfo.machine, length: Int(_SYS_NAMELEN), encoding: String.Encoding.ascii.rawValue)!.utf8String!)!
+    return versionCode == "iPhone19,4"
+#endif
+}
+
+var isPhoneDuoInnerFullScreen: Bool {
+    guard isPhoneDuo else { return false }
+    guard AppContext.appWindow?.windowScene?.session.role == .windowApplication else { return false }
+    let windowMaxDimension = max(AppContext.appBounds.width, AppContext.appBounds.height)
+    let isPhoneDuoInner = windowMaxDimension == 951
+    var isPhoneDuoSplitView = false
+    if let window = AppContext.appWindow, isPhoneDuoInner {
+        isPhoneDuoSplitView = !window.screen.bounds.equalTo(AppContext.appBounds)
+    }
+    return isPhoneDuoInner && !isPhoneDuoSplitView
+}
+
+var isPhoneDuoCompactWidth: Bool {
+    guard isPhoneDuo else { return false }
+    guard AppContext.appWindow?.windowScene?.session.role == .windowApplication else { return false }
+    guard let window = AppContext.appWindow else { return false }
+    
+    let windowMaxDimension = max(window.screen.bounds.width, window.screen.bounds.height)
+    let isPhoneDuoOuter = windowMaxDimension == 678
+    let isPhoneDuoInner = windowMaxDimension == 951
+    
+    var isPhoneDuoSplitView = false
+    if isPhoneDuoInner {
+        isPhoneDuoSplitView = !window.screen.bounds.equalTo(window.bounds)
+    }
+    
+    return (isPhoneDuoOuter && isPortrait) || (isPhoneDuoSplitView && window.safeAreaInsets.right > 0 && !isPortrait)
+}
 
 // 层级： Capsule(top) -> Toast -> 原生Alert -> Alert -> Capsule(middle) -> Sheet -> Capsule(bottom)
 extension UIWindow.Level {

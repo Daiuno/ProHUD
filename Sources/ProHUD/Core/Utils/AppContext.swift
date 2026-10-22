@@ -113,6 +113,14 @@ extension AppContext {
         }
     }
     
+    public static var isPhoneDuoTabletopMode: Bool = false
+    
+    public static func hideAllHUDs() {
+        AppContext.sheetWindows.values.flatMap({ $0 }).compactMap({ $0.sheet }).forEach({ $0.pop() })
+        AppContext.alertWindow.values.flatMap({ $0.alerts }).forEach({ $0.pop() })
+        AppContext.toastWindows.values.flatMap({ $0 }).compactMap({ $0.toast }).forEach({ $0.pop() })
+    }
+    
     /// 检查是否应该使用外部窗口显示ProHUD内容
     static var shouldUseExternalWindow: Bool {
         guard let info = externalWindowInfo else { return false }
@@ -189,6 +197,44 @@ extension AppContext {
             return .zero // 外部显示器通常没有安全边距
         }
         return appWindow?.safeAreaInsets ?? .zero 
+    }
+    
+    /// 从外部获取是否需要隐藏状态栏
+    public static var prefersStatusBarHidden: ((_ presentedViewController: UIViewController?) -> Bool?)? = nil
+    
+    /// Host mask for overlay windows. A sheet must not rotate on its own when the app pins landscape.
+    public static var supportedInterfaceOrientations: (() -> UIInterfaceOrientationMask)?
+    /// iOS 26 keeps a visible overlay from rotating when this is true.
+    public static var prefersInterfaceOrientationLocked: (() -> Bool)?
+    
+    /// iOS 26 sheet/alert windows can keep a portrait frame after the scene is forced back to landscape.
+    /// Skip while the scene itself is portrait so a mid-rotation frame is not copied onto the sheet.
+    /// Sheet and alert cover their window. While Tabletop is on, keep that window on the app's top pane.
+    /// Toast and capsule size themselves and already use `appBounds`.
+    public static func syncTabletopOverlayWindows() {
+        guard isPhoneDuoTabletopMode else { return }
+        for windows in sheetWindows.values {
+            for window in windows where window.isHidden == false {
+                window.matchSceneGeometry()
+                window.layoutIfNeeded()
+            }
+        }
+        for window in alertWindow.values where window.isHidden == false {
+            window.matchSceneGeometry()
+            window.layoutIfNeeded()
+        }
+    }
+    
+    public static func alignOverlayWindowsWithScene() {
+        guard #available(iOS 26.0, *) else { return }
+        for windows in sheetWindows.values {
+            for window in windows where window.isHidden == false && window.windowScene?.interfaceOrientation.isLandscape == true {
+                window.matchSceneGeometry()
+            }
+        }
+        for window in alertWindow.values where window.isHidden == false && window.windowScene?.interfaceOrientation.isLandscape == true {
+            window.matchSceneGeometry()
+        }
     }
     
 }

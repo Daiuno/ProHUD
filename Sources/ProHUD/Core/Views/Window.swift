@@ -8,9 +8,31 @@
 import UIKit
 import SnapKit
 
-/// Alert host / placeholder root. Do not lock interface orientation here:
-/// iOS 26 would keep the scene locked after the overlay is dismissed.
-class OverlayRootViewController: UIViewController {}
+/// Placeholder root before the real overlay controller is installed.
+/// Uses the host mask so this window cannot rotate away from the app.
+class OverlayRootViewController: UIViewController {
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        if let provider = AppContext.supportedInterfaceOrientations {
+            return provider()
+        }
+        return super.supportedInterfaceOrientations
+    }
+    
+    @available(iOS 26.0, *)
+    override var prefersInterfaceOrientationLocked: Bool {
+        if let provider = AppContext.prefersInterfaceOrientationLocked {
+            return provider()
+        }
+        return super.prefersInterfaceOrientationLocked
+    }
+    
+    open override var prefersStatusBarHidden: Bool {
+        if let action = AppContext.prefersStatusBarHidden, let result = action(presentedViewController) {
+            return result
+        }
+        return super.prefersStatusBarHidden
+    }
+}
 
 class Window: UIWindow {
     
@@ -51,12 +73,17 @@ class Window: UIWindow {
     }
     
     /// iOS 26 only: copy the scene's interface bounds so the overlay does not start in device-native portrait.
+    /// In Tabletop the scene is still the full inner display, so follow the app window's top pane instead.
     func matchSceneGeometry() {
         guard #available(iOS 26.0, *) else { return }
+        transform = .identity
+        if AppContext.isPhoneDuoTabletopMode, let appFrame = AppContext.appWindow?.frame, appFrame.width > 1, appFrame.height > 1 {
+            frame = appFrame
+            return
+        }
         guard let scene = windowScene else { return }
         let bounds = scene.coordinateSpace.bounds
         guard !bounds.isEmpty else { return }
-        transform = .identity
         frame = bounds
     }
     

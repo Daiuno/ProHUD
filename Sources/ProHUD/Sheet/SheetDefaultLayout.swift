@@ -53,22 +53,31 @@ extension SheetTarget: DefaultLayout {
             if config.isFullScreen {
                 make.edges.equalToSuperview()
             } else {
-                make.centerX.equalToSuperview()
-                if UIDevice.current.userInterfaceIdiom == .pad && width < autoWidth - 40 {
-                    // iPad且窗口宽度较宽时居中弹出
-                    make.centerY.equalToSuperview().offset(config.yOffsetWhenCardLayoutCenterY)
-                } else {
+                if isPhoneDuoCompactWidth {
+                    make.leading.trailing.equalTo(view.safeAreaLayoutGuide)
                     if let bottomEdgeInset = config.bottomEdgeInset {
                         make.bottom.equalToSuperview().inset(bottomEdgeInset)
                     } else {
-                        if isPortrait {
-                            make.bottom.equalToSuperview().inset(config.windowEdgeInset)
+                        make.bottom.equalToSuperview().inset(config.windowEdgeInset)
+                    }
+                } else {
+                    make.centerX.equalToSuperview()
+                    if (UIDevice.current.userInterfaceIdiom == .pad && width < autoWidth - 40) || isPhoneDuoInnerFullScreen {
+                        // iPad且窗口宽度较宽时居中弹出
+                        make.centerY.equalToSuperview().offset(config.yOffsetWhenCardLayoutCenterY)
+                    } else {
+                        if let bottomEdgeInset = config.bottomEdgeInset {
+                            make.bottom.equalToSuperview().inset(bottomEdgeInset)
                         } else {
-                            make.centerY.equalToSuperview().offset(config.yOffsetWhenCardLayoutCenterY)
+                            if isPortrait {
+                                make.bottom.equalToSuperview().inset(config.windowEdgeInset)
+                            } else {
+                                make.centerY.equalToSuperview().offset(config.yOffsetWhenCardLayoutCenterY)
+                            }
                         }
                     }
+                    make.width.equalTo(width)
                 }
-                make.width.equalTo(width)
                 make.height.greaterThanOrEqualTo(config.cardCornerRadiusByDefault * 2)
                 make.height.lessThanOrEqualTo(config.cardMaxHeightByDefault)
             }

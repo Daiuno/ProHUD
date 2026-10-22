@@ -115,9 +115,24 @@ open class BaseController: UIViewController {
         })
     }
     
+    open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        if let provider = AppContext.supportedInterfaceOrientations {
+            return provider()
+        }
+        return super.supportedInterfaceOrientations
+    }
+    
+    @available(iOS 26.0, *)
+    open override var prefersInterfaceOrientationLocked: Bool {
+        if let provider = AppContext.prefersInterfaceOrientationLocked {
+            return provider()
+        }
+        return super.prefersInterfaceOrientationLocked
+    }
+    
     open override var prefersStatusBarHidden: Bool {
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            return !isDevicePortrait
+        if let action = AppContext.prefersStatusBarHidden, let result = action(presentedViewController) {
+            return result
         }
         return super.prefersStatusBarHidden
     }

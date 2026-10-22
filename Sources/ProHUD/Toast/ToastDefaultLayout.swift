@@ -150,7 +150,10 @@ extension ToastTarget {
     }
     
     func getWindowSize(window: ToastWindow) -> CGSize {
-        let width = CGFloat.minimum(AppContext.appBounds.width - config.marginX - config.marginX, config.cardMaxWidthByDefault)
+        var width = CGFloat.minimum(AppContext.appBounds.width - config.marginX - config.marginX, config.cardMaxWidthByDefault)
+        if isPhoneDuoCompactWidth {
+            width -= 84
+        }
         view.frame.size = CGSize(width: width, height: config.cardMaxHeightByDefault) // 以最大高度开始布局，然后计算实际需要高度
         titleLabel.sizeToFit()
         bodyLabel.sizeToFit()
